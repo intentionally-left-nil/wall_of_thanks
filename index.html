@@ -4,12 +4,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="style.css">`
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script type="module" src="index.js"></script>
   <title>Congratulations!</title>
 </head>
 
 <body>
+  <template id="comment-template">
+    <style>
+      .comment {
+        padding: 10px;
+        margin: 10px;
+        border: 1px solid black;
+        border-radius: 5px;
+        background: white;
+      }
+    </style>
+    <div class="comment">
+      <slot name="comment">Hello, world!</slot>
+    </div>
+  </template>
   <img id="hero" src="/images/hero_full.jpeg" />
+  <a-comment>
+    <p slot="comment">OMG you're amazing</p>
+  </a-comment>
 </body>
 
 </html>

@@ -132,3 +132,7 @@ dist
 
 # Static files
 images/
+
+# compiled files
+index.js
+index.js.map
