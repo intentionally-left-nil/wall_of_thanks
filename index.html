@@ -13,21 +13,47 @@
   <template id="comment-template">
     <style>
       .comment {
+        display: inline-block;
         padding: 10px;
-        margin: 10px;
+        padding: 10px;
+        margin: 50px;
+        max-height: 200px;
         border: 1px solid black;
-        border-radius: 5px;
+        border-radius: 15px;
         background: white;
       }
+
+      .author {
+        text-align: right;
+      }
     </style>
-    <div class="comment">
-      <slot name="comment">Hello, world!</slot>
-    </div>
+    <div>
+      <div class="comment">
+        <slot name="comment"></slot>
+        <p class="author">&mdash; <slot name="author">Anonymous</slot>
+        </p>
+      </div>
+      <div>
   </template>
+  <div class="letterbox">
+    <a-comment>
+      <p slot="comment">OMG you're amazing</p>
+      <span slot="author">Anil</span>
+    </a-comment>
+    <a-comment>
+      <p slot="comment">OMG you're amazing</p>
+    </a-comment>
+  </div>
   <img id="hero" src="/images/hero_full.jpeg" />
-  <a-comment>
-    <p slot="comment">OMG you're amazing</p>
-  </a-comment>
+  <div class="letterbox">
+    <a-comment>
+      <p slot="comment">OMG you're amazing</p>
+    </a-comment>
+    <a-comment>
+      <p slot="comment">OMG you're amazing</p>
+    </a-comment>
+
+  </div>
 </body>
 
 </html>
