@@ -12,32 +12,45 @@
 <body>
   <template id="comment-template">
     <style>
-      .comment {
+      #container {
+        display: flex;
+      }
+
+      #offset {
+        flex-grow: 0;
+        flex-shrink: 1;
+        flex-basis: 10%;
+      }
+
+      #comment {
         display: inline-block;
+        /* flex-shrink: 0; */
         padding: 10px;
         padding: 10px;
         margin: 50px;
+        min-width: 200px;
         max-height: 200px;
         border: 1px solid black;
         border-radius: 15px;
         background: white;
       }
 
-      .author {
+      #author {
         text-align: right;
       }
     </style>
-    <div>
-      <div class="comment">
+    <div id="container">
+      <div id="offset"></div>
+      <div id="comment">
         <slot name="comment"></slot>
-        <p class="author">&mdash; <slot name="author">Anonymous</slot>
+        <p id="author">&mdash; <slot name="author">Anonymous</slot>
         </p>
       </div>
       <div>
   </template>
   <div class="letterbox">
     <a-comment>
-      <p slot="comment">OMG you're amazing</p>
+      <p slot="comment">OMG you're amazing. This is a really long sentence. And here's another</p>
       <span slot="author">Anil</span>
     </a-comment>
     <a-comment>
