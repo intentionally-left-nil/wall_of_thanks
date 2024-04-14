@@ -142,3 +142,4 @@ backend/target/
 backend/debug/
 **/*.rs.bk
 *.pdb
+*.db
