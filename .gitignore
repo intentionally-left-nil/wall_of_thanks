@@ -136,3 +136,9 @@ images/
 # compiled files
 index.js
 index.js.map
+
+# Rust files
+backend/target/
+backend/debug/
+**/*.rs.bk
+*.pdb
