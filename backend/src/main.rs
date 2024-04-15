@@ -1,11 +1,11 @@
+use clap::{self, Parser};
 use regex::Regex;
 use rusqlite;
 use serde;
 use serde_json;
-use std::env;
 use std::error::Error;
 use std::io::Cursor;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use subtle::ConstantTimeEq;
 use tiny_http::{Header, Request, Response, Server, StatusCode};
 
@@ -247,15 +247,22 @@ fn send_response(request: Request, response: RouteResponse) {
     }
 }
 
+#[derive(clap::Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, required = true)]
+    secret: String,
+
+    #[arg(short, long, default_value_t = 8001)]
+    port: u16,
+
+    #[arg(short, long, default_value = "data.db")]
+    db_path: PathBuf,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-    let port = args
-        .get(1)
-        .and_then(|s| s.parse::<u16>().ok())
-        .unwrap_or(8001);
-    let db_path = Path::new("data.db");
-    let conn = initialize_database(db_path)?;
-    let admin_password = "test"; // TODO read from the command line
-    start_server(port, conn, admin_password)?;
+    let args = Args::parse();
+    let conn = initialize_database(args.db_path.as_path())?;
+    start_server(args.port, conn, &args.secret)?;
     return Ok(());
 }
