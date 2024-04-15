@@ -2,10 +2,10 @@ use regex::Regex;
 use rusqlite;
 use serde;
 use serde_json;
+use std::env;
 use std::error::Error;
 use std::io::Cursor;
 use std::path::Path;
-use std::{collections::HashMap, env};
 use subtle::ConstantTimeEq;
 use tiny_http::{Header, Request, Response, Server, StatusCode};
 
@@ -88,8 +88,18 @@ where
     return Ok(parsed);
 }
 
-fn list_comments(conn: &rusqlite::Connection) -> Result<RouteResponse, Box<dyn Error>> {
+fn list_comments(
+    request: &mut Request,
+    conn: &rusqlite::Connection,
+    admin_password: &str,
+) -> Result<RouteResponse, Box<dyn Error>> {
     let mut statement = conn.prepare(&format!("SELECT {} FROM comments", ROW_QUERY))?;
+    if check_authorization(request, admin_password) {
+        statement = conn.prepare(&format!(
+            "SELECT {} FROM comments WHERE approved = 1",
+            ROW_QUERY
+        ))?;
+    }
     let comments: Result<Vec<Comment>, _> = statement.query_map([], row_to_comment)?.collect();
     return respond_with_json(200, &comments?);
 }
@@ -134,7 +144,7 @@ fn check_authorization(request: &Request, admin_password: &str) -> bool {
     };
 }
 
-fn approve_comment(
+fn update_comment(
     request: &mut Request,
     id: i64,
     admin_password: &str,
@@ -212,11 +222,11 @@ fn start_server(
         let route = (request.method(), request.url());
         println!("Handling {} {}", route.0, route.1);
         let response = match route {
-            (&tiny_http::Method::Get, "/") => list_comments(&db_conn),
+            (&tiny_http::Method::Get, "/") => list_comments(&mut request, &db_conn, admin_password),
             (&tiny_http::Method::Post, "/") => create_comment(&mut request, &db_conn),
             _ if route.0 == &tiny_http::Method::Put && patch_regex.is_match(route.1) => {
                 let id = patch_regex.captures(route.1).unwrap()[1].parse::<i64>()?;
-                approve_comment(&mut request, id, admin_password, &db_conn)
+                update_comment(&mut request, id, admin_password, &db_conn)
             }
             _ => Ok(default_response(404)),
         };
