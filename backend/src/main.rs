@@ -1,7 +1,7 @@
 use regex::Regex;
+use rusqlite;
 use serde;
-use serde_json::{self, Value};
-use sqlite;
+use serde_json;
 use std::error::Error;
 use std::io::Cursor;
 use std::path::Path;
@@ -33,18 +33,15 @@ struct UpdateComment {
 
 type RouteResponse = Response<Cursor<Vec<u8>>>;
 
-fn row_to_comment(statement: &mut sqlite::Statement) -> Result<Comment, Box<dyn Error>> {
-    let id = statement.read::<i64, _>("id")?;
-    let message = statement.read::<String, _>("message")?;
-    let author = statement.read::<String, _>("author")?;
-    let approved = statement.read::<i64, _>("approved")? != 0;
-    let created_at = statement.read::<String, _>("created_at")?;
+// Keep in sync with row_to_comment
+const ROW_QUERY: &str = "id, message, author, approved, created_at";
+fn row_to_comment(row: &rusqlite::Row) -> Result<Comment, rusqlite::Error> {
     return Ok(Comment {
-        id,
-        message,
-        author,
-        approved,
-        created_at,
+        id: row.get(0)?,
+        message: row.get(1)?,
+        author: row.get(2)?,
+        approved: row.get(3)?,
+        created_at: row.get(4)?,
     });
 }
 
@@ -91,33 +88,25 @@ where
     return Ok(parsed);
 }
 
-fn list_comments(conn: &sqlite::ConnectionThreadSafe) -> Result<RouteResponse, Box<dyn Error>> {
-    let mut statement = conn.prepare("SELECT * FROM comments")?;
-    let mut rows: Vec<Result<Comment, Box<dyn Error>>> = Vec::new();
-    while let Ok(sqlite::State::Row) = statement.next() {
-        rows.push(row_to_comment(&mut statement));
-    }
-    let comments: Result<Vec<Comment>, Box<dyn Error>> = rows.into_iter().collect();
+fn list_comments(conn: &rusqlite::Connection) -> Result<RouteResponse, Box<dyn Error>> {
+    let mut statement = conn.prepare(&format!("SELECT {} FROM comments", ROW_QUERY))?;
+    let comments: Result<Vec<Comment>, _> = statement.query_map([], row_to_comment)?.collect();
     return respond_with_json(200, &comments?);
 }
 
 fn create_comment(
     request: &mut Request,
-    conn: &sqlite::ConnectionThreadSafe,
+    conn: &rusqlite::Connection,
 ) -> Result<RouteResponse, Box<dyn Error>> {
     let comment: NewComment = match read_json(request) {
         Ok(comment) => comment,
         Err(e) => return respond_with_json(400, &e.to_string()),
     };
-    let mut statement =
-        conn.prepare("INSERT INTO comments (message, author) VALUES (?, ?) RETURNING *")?;
-    statement.bind::<&[(usize, sqlite::Value)]>(
-        &[(1, comment.message.into()), (2, comment.author.into())][..],
-    )?;
-    if let sqlite::State::Done = statement.next()? {
-        return Err("No row returned".into());
-    }
-    let inserted = row_to_comment(&mut statement)?;
+    let mut statement = conn.prepare(&format!(
+        "INSERT INTO comments (message, author) VALUES (?1, ?2) RETURNING {}",
+        ROW_QUERY
+    ))?;
+    let inserted = statement.query_row([&comment.message, &comment.author], row_to_comment)?;
     return respond_with_json(201, &inserted);
 }
 
@@ -149,7 +138,7 @@ fn approve_comment(
     request: &mut Request,
     id: i64,
     admin_password: &str,
-    conn: &sqlite::ConnectionThreadSafe,
+    conn: &rusqlite::Connection,
 ) -> Result<RouteResponse, Box<dyn Error>> {
     if !check_authorization(request, admin_password) {
         return respond_with_json(401, "Unauthorized");
@@ -158,34 +147,45 @@ fn approve_comment(
         Ok(comment) => comment,
         Err(e) => return respond_with_json(400, &e.to_string()),
     };
-    let map: HashMap<String, Value> = serde_json::from_str(&serde_json::to_string(&updates)?)?;
-    let mut values: Vec<(usize, sqlite::Value)> = Vec::new();
+    let mut values: Vec<&dyn rusqlite::ToSql> = Vec::new();
     let mut query = String::new();
     query.push_str("UPDATE COMMENTS SET ");
+    let approved = updates.approved.unwrap_or_default();
+    let message = updates.message.clone().unwrap_or_default();
+    let author = updates.author.clone().unwrap_or_default();
 
-    for (i, (key, value)) in map.iter().filter(|(_, v)| !v.is_null()).enumerate() {
-        if i > 0 {
+    if updates.approved.is_some() {
+        values.push(&approved);
+        if values.len() > 1 {
             query.push_str(", ");
         }
-        query.push_str(&format!("{} = ?", key));
-        values.push((i + 1, value.to_string().into()));
+        query.push_str(&format!("approved = ?{}", values.len()));
+    }
+    if updates.message.is_some() {
+        values.push(&message);
+        if values.len() > 1 {
+            query.push_str(", ");
+        }
+        query.push_str(&format!("message = ?{}", values.len()));
+    }
+    if updates.author.is_some() {
+        values.push(&author);
+        if values.len() > 1 {
+            query.push_str(", ");
+        }
+        query.push_str(&format!("author = ?{}", values.len()));
     }
     if values.is_empty() {
         return respond_with_json(400, "No updates provided");
     }
-    query.push_str(format!(" WHERE id = {} RETURNING *", id).as_str());
+    query.push_str(format!(" WHERE id = {} RETURNING {}", id, ROW_QUERY).as_str());
     let mut statement = conn.prepare(query.as_str())?;
-    statement.bind::<&[(usize, sqlite::Value)]>(&values[..])?;
-
-    if let sqlite::State::Done = statement.next()? {
-        return Ok(default_response(404));
-    }
-    let inserted = row_to_comment(&mut statement)?;
-    return respond_with_json(200, &inserted);
+    let updated = statement.query_row(values.as_slice(), row_to_comment)?;
+    return respond_with_json(201, &updated);
 }
 
-fn initialize_database(path: &Path) -> Result<sqlite::ConnectionThreadSafe, Box<dyn Error>> {
-    let conn = sqlite::Connection::open_thread_safe(path)?;
+fn initialize_database(path: &Path) -> Result<rusqlite::Connection, Box<dyn Error>> {
+    let conn = rusqlite::Connection::open(path)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -193,13 +193,14 @@ fn initialize_database(path: &Path) -> Result<sqlite::ConnectionThreadSafe, Box<
         author TEXT,
         approved BOOLEAN NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
+        (),
     )?;
     return Ok(conn);
 }
 
 fn start_server(
     port: u16,
-    db_conn: sqlite::ConnectionThreadSafe,
+    db_conn: rusqlite::Connection,
     admin_password: &str,
 ) -> Result<(), Box<dyn Error>> {
     let server = match Server::http(("0.0.0.0", port)) {
