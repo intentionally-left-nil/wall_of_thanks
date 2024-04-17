@@ -22,7 +22,7 @@
         flex-basis: 10%;
       }
 
-      #comment {
+      #comment-container {
         display: inline-block;
         /* flex-shrink: 0; */
         padding: 10px;
@@ -35,37 +35,22 @@
         background: white;
       }
 
-      #author {
+      #author-container {
         text-align: right;
       }
     </style>
     <div id="container">
       <div id="offset"></div>
-      <div id="comment">
-        <slot name="comment"></slot>
-        <p id="author">&mdash; <slot name="author">Anonymous</slot>
-        </p>
+      <div id="comment-container">
+        <p id="message"></p>
+        <p id="author-container">&mdash;<span id="author"></span></p>
       </div>
       <div>
   </template>
-  <div class="letterbox">
-    <a-comment>
-      <p slot="comment">OMG you're amazing. This is a really long sentence. And here's another</p>
-      <span slot="author">Anil</span>
-    </a-comment>
-    <a-comment>
-      <p slot="comment">OMG you're amazing</p>
-    </a-comment>
+  <div id="left-letterbox" class="letterbox">
   </div>
   <img id="hero" src="/images/hero_full.jpeg" />
-  <div class="letterbox">
-    <a-comment>
-      <p slot="comment">OMG you're amazing</p>
-    </a-comment>
-    <a-comment>
-      <p slot="comment">OMG you're amazing</p>
-    </a-comment>
-
+  <div id="right-letterbox" class="letterbox">
   </div>
 </body>
 

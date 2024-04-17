@@ -1,4 +1,8 @@
 export default class CommentElement extends HTMLElement {
+  static get observedAttributes() {
+    return ['author', 'message'];
+  }
+
   constructor() {
     super();
     const node = document.getElementById('comment-template');
@@ -13,9 +17,18 @@ export default class CommentElement extends HTMLElement {
     const shadowRoot = this.shadowRoot!;
 
     const offset = shadowRoot.querySelector('#offset') as HTMLElement | null;
-    if (offset == null) {
-      throw new Error('offset not found');
+    if (offset) {
+      offset.style.flexBasis = `${Math.random() * 100}%`;
     }
-    offset.style.flexBasis = `${Math.random() * 100}%`;
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (!['message', 'author'].includes(name)) {
+      return;
+    }
+    const node = this.shadowRoot!.querySelector('#' + name);
+    if (node) {
+      node.textContent = newValue;
+    }
   }
 }
