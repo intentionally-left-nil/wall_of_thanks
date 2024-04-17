@@ -2,11 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "outDir": "./",
-    "rootDir": "./",
+    "outDir": "./js",
+    "rootDir": "./ts",
     "strict": true,
     "sourceMap": true
   },
-  "include": ["*.ts"],
+  "include": ["ts/**/*.ts"],
   "exclude": ["node_modules"]
 }
