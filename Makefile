@@ -5,6 +5,7 @@ backend:
 	cd backend && cargo run
 
 compile:
+	rm -r *.js
 	tsc
 
 .PHONY: $(MAKECMDGOALS)

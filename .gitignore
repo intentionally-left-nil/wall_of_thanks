@@ -134,8 +134,8 @@ dist
 images/
 
 # compiled files
-index.js
-index.js.map
+/*.js
+*.js.map
 
 # Rust files
 backend/target/
