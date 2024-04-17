@@ -211,6 +211,7 @@ fn initialize_database(path: &Path) -> Result<rusqlite::Connection, Box<dyn Erro
 fn start_server(
     port: u16,
     db_conn: rusqlite::Connection,
+    frontend_origin: String,
     admin_password: &str,
 ) -> Result<(), Box<dyn Error>> {
     let server = match Server::http(("0.0.0.0", port)) {
@@ -228,10 +229,32 @@ fn start_server(
                 let id = patch_regex.captures(route.1).unwrap()[1].parse::<i64>()?;
                 update_comment(&mut request, id, admin_password, &db_conn)
             }
+            _ if route.0 == &tiny_http::Method::Options => {
+                let mut response = default_response(200);
+                response.add_header(
+                    "Access-Control-Allow-Methods: GET, POST, PUT, DELETE"
+                        .parse::<Header>()
+                        .unwrap(),
+                );
+                response.add_header(
+                    "Access-Control-Allow-Headers: Content-Type"
+                        .parse::<Header>()
+                        .unwrap(),
+                );
+                Ok(response)
+            }
             _ => Ok(default_response(404)),
         };
         match response {
-            Ok(response) => send_response(request, response),
+            Ok(mut response) => {
+                response.add_header(
+                    format!("Access-Control-Allow-Origin: {}", frontend_origin)
+                        .parse::<Header>()
+                        .unwrap(),
+                );
+                response.add_header("Access-Control-Max-Age: 300".parse::<Header>().unwrap());
+                send_response(request, response);
+            }
             Err(e) => {
                 eprintln!("Error: {}", e);
                 send_response(request, default_response(500))
@@ -258,11 +281,14 @@ struct Args {
 
     #[arg(short, long, default_value = "data.db")]
     db_path: PathBuf,
+
+    #[arg(long, default_value = "*")]
+    frontend_origin: String,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     let conn = initialize_database(args.db_path.as_path())?;
-    start_server(args.port, conn, &args.secret)?;
+    start_server(args.port, conn, args.frontend_origin, &args.secret)?;
     return Ok(());
 }
