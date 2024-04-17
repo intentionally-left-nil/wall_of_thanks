@@ -1,4 +1,4 @@
-export default class Comment extends HTMLElement {
+export default class CommentElement extends HTMLElement {
   constructor() {
     super();
     const node = document.getElementById('comment-template');
