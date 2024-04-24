@@ -35,6 +35,60 @@
         background: white;
       }
 
+      [contenteditable]:read-write {
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+
+      [contenteditable]:read-write:hover {
+        border-color: #888;
+      }
+
+      [contenteditable]:read-write:focus {
+        outline: none;
+        border-color: #007BFF;
+        background-color: #e6f0ff;
+      }
+
+      #message {
+        font-size: 1em;
+        padding: 10px;
+      }
+
+      #message:read-write {
+        min-height: 3.6em;
+      }
+
+      #author {
+        font-size: 1em;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      #author:read-write {
+        min-width: 6em;
+      }
+
+      #author:read-write:empty::before {
+        content: "Author";
+        color: #ccc;
+      }
+
+      :dir(ltr) #author {
+        padding-left: 6px;
+        padding-right: 10px;
+        margin-left: 4px;
+      }
+
+      :dir(rtl) #author {
+        margin-right: 4px;
+        padding-right: 6px;
+        padding-left: 10px;
+      }
+
       #author-container {
         text-align: right;
       }

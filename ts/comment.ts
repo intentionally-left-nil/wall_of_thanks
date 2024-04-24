@@ -1,6 +1,6 @@
 export default class CommentElement extends HTMLElement {
   static get observedAttributes() {
-    return ['author', 'message'];
+    return ['author', 'message', 'editable'];
   }
 
   constructor() {
@@ -23,12 +23,40 @@ export default class CommentElement extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (!['message', 'author'].includes(name)) {
+    if (oldValue === newValue) {
       return;
     }
-    const node = this.shadowRoot!.querySelector('#' + name);
-    if (node) {
-      node.textContent = newValue;
+
+    switch (name) {
+      case 'editable':
+        const editable = newValue.toLowerCase() === 'true';
+        const container = this.shadowRoot!.querySelector('#container');
+        if (container) {
+          editable
+            ? container.classList.add('editable')
+            : container.classList.remove('editable');
+        }
+        for (const selector of ['#message', '#author']) {
+          const node = this.shadowRoot!.querySelector(selector);
+          if (node) {
+            editable
+              ? node.setAttribute('contenteditable', 'true')
+              : node.removeAttribute('contenteditable');
+          }
+        }
+        break;
+      case 'message':
+      case 'author':
+        const node = this.shadowRoot!.querySelector('#' + name);
+        if (name === 'author') {
+          newValue = newValue || 'Unknown';
+        }
+        if (node) {
+          node.textContent = newValue;
+        }
+        break;
+      default:
+        throw new Error('Unknown attribute');
     }
   }
 }
