@@ -9,10 +9,8 @@ getComments().then((comments) => {
     return;
   }
   comments.forEach((comment, index) => {
-    const element = document.createElement('a-comment');
-    element.setAttribute('id', `comment_${comment.id}`);
-    element.setAttribute('author', comment.author);
-    element.setAttribute('message', comment.message);
+    const element = document.createElement('a-comment') as CommentElement;
+    element.comment = comment;
     element.setAttribute('editable', 'true');
     if (index % 2 === 0) {
       leftColumn.appendChild(element);

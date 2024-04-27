@@ -1,7 +1,7 @@
 export type Comment = {
-  id: Number;
+  id?: number;
   message: string;
   author: string;
   approved: boolean;
-  created_at: Date;
+  created_at?: Date;
 };

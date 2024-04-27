@@ -2,11 +2,13 @@ import { createComment, editComment } from './backend.js';
 import type { Comment } from './types.js';
 export default class CommentElement extends HTMLElement {
   static get observedAttributes() {
-    return ['author', 'message', 'editable', 'id'];
+    return ['editable'];
   }
 
+  _comment: Comment | null;
   constructor() {
     super();
+    this._comment = null;
     const node = document.getElementById('comment-template');
     if (node == null || !(node instanceof HTMLTemplateElement)) {
       throw new Error('comment-template not found');
@@ -41,6 +43,19 @@ export default class CommentElement extends HTMLElement {
     }
   }
 
+  set comment(value: Comment | null) {
+    this._comment = value;
+    const message = this.shadowRoot!.querySelector('#message');
+    if (message) {
+      message.textContent = value?.message || '';
+    }
+    const author = this.shadowRoot!.querySelector('#author');
+
+    if (author) {
+      author.textContent = value?.author || 'Unknown';
+    }
+  }
+
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (oldValue === newValue) {
       return;
@@ -48,7 +63,7 @@ export default class CommentElement extends HTMLElement {
 
     switch (name) {
       case 'editable':
-        const editable = newValue.toLowerCase() === 'true';
+        const editable = newValue && newValue.toLowerCase() === 'true';
         for (const selector of ['#message', '#author']) {
           const node = this.shadowRoot!.querySelector(selector);
           if (node) {
@@ -56,16 +71,6 @@ export default class CommentElement extends HTMLElement {
               ? node.setAttribute('contenteditable', 'true')
               : node.removeAttribute('contenteditable');
           }
-        }
-        break;
-      case 'message':
-      case 'author':
-        const node = this.shadowRoot!.querySelector('#' + name);
-        if (name === 'author') {
-          newValue = newValue || 'Unknown';
-        }
-        if (node) {
-          node.textContent = newValue;
         }
         break;
       default:
@@ -108,17 +113,9 @@ export default class CommentElement extends HTMLElement {
 
     try {
       let comment: Comment;
-      if (this.hasAttribute('id')) {
-        const parts = this.getAttribute('id')!.split('comment_');
-        if (parts.length !== 2 || parts[0] != '' || !parts[1]) {
-          throw new Error('Invalid id');
-        }
-        const id = parseInt(parts[1], 10);
-        if (isNaN(id)) {
-          throw new Error('Invalid id');
-        }
+      if (this._comment?.id) {
         comment = await editComment({
-          id,
+          id: this._comment.id,
           message: message.textContent,
           author: author.textContent,
         });
@@ -128,9 +125,7 @@ export default class CommentElement extends HTMLElement {
           author: author.textContent,
         });
       }
-      this.setAttribute('message', comment.message);
-      this.setAttribute('author', comment.author);
-      this.setAttribute('id', `comment_${comment.id.toString()}`);
+      this.comment = comment;
     } catch (error) {
       this.setAttribute('editable', 'true');
       throw error;
