@@ -29,7 +29,6 @@
         padding: 10px;
         margin: 50px;
         min-width: 200px;
-        max-height: 200px;
         border: 1px solid black;
         border-radius: 15px;
         background: white;
@@ -63,9 +62,11 @@
       }
 
       #author {
+        display: inline-block;
         font-size: 1em;
         padding-top: 10px;
         padding-bottom: 10px;
+        text-align: left;
       }
 
       #author:read-write {
@@ -92,12 +93,41 @@
       #author-container {
         text-align: right;
       }
+
+      :host(:not([editable="true"])) #submit {
+        display: none;
+      }
+
+      #submit {
+        display: block;
+        margin-right: 0;
+        margin-left: auto;
+        background-color: #4B2E83;
+        border: 1px solid black;
+        border-radius: 15px;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 14px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+      }
+
+      #submit:hover {
+        background-color: #39256c;
+      }
+
+      .error {
+        border-color: red !important;
+      }
     </style>
     <div id="container">
       <div id="offset"></div>
       <div id="comment-container">
         <p id="message"></p>
         <p id="author-container">&mdash;<span id="author"></span></p>
+        <button id="submit">Submit</button>
       </div>
       <div>
   </template>

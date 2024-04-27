@@ -237,7 +237,7 @@ fn start_server(
                         .unwrap(),
                 );
                 response.add_header(
-                    "Access-Control-Allow-Headers: Content-Type"
+                    "Access-Control-Allow-Headers: Content-Type, Authorization"
                         .parse::<Header>()
                         .unwrap(),
                 );
