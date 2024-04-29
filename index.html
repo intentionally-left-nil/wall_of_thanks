@@ -12,6 +12,24 @@
 <body>
   <template id="comment-template">
     <style>
+      .hidden {
+        display: none;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .fade-in {
+        animation: fade-in 5s;
+      }
+
       #container {
         display: flex;
       }
@@ -107,10 +125,6 @@
         padding-bottom: 10px;
       }
 
-      .hidden {
-        display: none;
-      }
-
       #approved-row label {
         font-size: 0.7em;
         color: #333;
@@ -140,7 +154,7 @@
         border-color: red !important;
       }
     </style>
-    <div id="container">
+    <div id="container" class="fade-in">
       <div id="offset"></div>
       <div id="comment-container">
         <p id="message"></p>
