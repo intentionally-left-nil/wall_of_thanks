@@ -17,16 +17,20 @@ getComments().then((comments) => {
   comments.sort((a, b) =>
     a.approved === b.approved ? 0 : a.approved ? 1 : -1
   );
+
   comments.forEach((comment, index) => {
     const element = document.createElement('a-comment') as CommentElement;
+    element.style.visibility = 'hidden';
     element.comment = comment;
     if (isAdmin) {
       element.setAttribute('editable', 'true');
     }
-    if (index % 2 === 0) {
-      leftColumn.appendChild(element);
+    const column = index % 2 === 0 ? leftColumn : rightColumn;
+    column.appendChild(element);
+    if (column.scrollHeight <= column.offsetHeight) {
+      element.style.removeProperty('visibility');
     } else {
-      rightColumn.appendChild(element);
+      column.removeChild(element);
     }
   });
 });
