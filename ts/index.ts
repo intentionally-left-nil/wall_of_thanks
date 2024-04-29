@@ -13,6 +13,10 @@ getComments().then((comments) => {
   const newComment = document.createElement('a-comment') as CommentElement;
   newComment.setAttribute('editable', 'true');
   leftColumn.appendChild(newComment);
+
+  comments.sort((a, b) =>
+    a.approved === b.approved ? 0 : a.approved ? 1 : -1
+  );
   comments.forEach((comment, index) => {
     const element = document.createElement('a-comment') as CommentElement;
     element.comment = comment;

@@ -37,10 +37,25 @@ async function createComment(comment: {
 async function editComment(comment: {
   id: number;
   secret: string | null;
-  message?: string;
-  author?: string;
+  message: string;
+  author: string;
+  approved: boolean;
 }): Promise<Comment> {
-  const token = localStorage.getItem('token') ?? comment.secret;
+  const adminToken = localStorage.getItem('token');
+  const payload: {
+    id: number;
+    message: string;
+    author: string;
+    approved?: boolean;
+  } = {
+    id: comment.id,
+    message: comment.message,
+    author: comment.author,
+  };
+  if (adminToken) {
+    payload.approved = comment.approved;
+  }
+  const token = adminToken ?? comment.secret;
   if (!token) {
     throw new Error('Cannot edit a comment without a token');
   }
@@ -51,11 +66,7 @@ async function editComment(comment: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      id: comment.id,
-      message: comment.message,
-      author: comment.author,
-    }),
+    body: JSON.stringify(payload),
   });
   if (!response.ok) {
     throw new Error('Failed to edit comment');

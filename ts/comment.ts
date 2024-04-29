@@ -41,6 +41,13 @@ export default class CommentElement extends HTMLElement {
     if (submit) {
       submit.addEventListener('click', this.onSubmit.bind(this));
     }
+
+    if (localStorage.getItem('token')) {
+      const approvedRow = shadowRoot.querySelector('#approved-row');
+      if (approvedRow) {
+        approvedRow.classList.remove('hidden');
+      }
+    }
   }
 
   set comment(value: Comment | null) {
@@ -57,6 +64,13 @@ export default class CommentElement extends HTMLElement {
 
     if (this._comment?.id) {
       this.shadowRoot!.querySelector('#submit')!.textContent = 'Update';
+    }
+
+    const approved: HTMLInputElement | null =
+      this.shadowRoot!.querySelector('#approved');
+
+    if (approved) {
+      approved.checked = value?.approved ?? false;
     }
   }
 
@@ -92,7 +106,10 @@ export default class CommentElement extends HTMLElement {
   async onSubmit(e: Event) {
     const message = this.shadowRoot!.querySelector('#message');
     const author = this.shadowRoot!.querySelector('#author');
-    if (!message || !author) {
+    const approved = this.shadowRoot!.querySelector(
+      '#approved'
+    ) as HTMLInputElement | null;
+    if (!message || !author || !approved) {
       return;
     }
 
@@ -123,6 +140,7 @@ export default class CommentElement extends HTMLElement {
           secret: this._comment.secret,
           message: message.textContent,
           author: author.textContent,
+          approved: approved.checked,
         });
       } else {
         comment = await createComment({
