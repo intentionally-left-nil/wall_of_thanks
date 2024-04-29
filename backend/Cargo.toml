@@ -13,3 +13,5 @@ subtle = "2.5"
 regex = "1.10.4"
 rusqlite = "0.31.0"
 clap = { version = "4.5.4", features = ["derive"] }
+rand = "0.8.5"
+base64 = "0.22.0"

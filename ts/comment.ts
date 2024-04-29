@@ -54,6 +54,10 @@ export default class CommentElement extends HTMLElement {
     if (author) {
       author.textContent = value?.author || 'Unknown';
     }
+
+    if (this._comment?.id) {
+      this.shadowRoot!.querySelector('#submit')!.textContent = 'Update';
+    }
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -116,6 +120,7 @@ export default class CommentElement extends HTMLElement {
       if (this._comment?.id) {
         comment = await editComment({
           id: this._comment.id,
+          secret: this._comment.secret,
           message: message.textContent,
           author: author.textContent,
         });
@@ -126,10 +131,8 @@ export default class CommentElement extends HTMLElement {
         });
       }
       this.comment = comment;
-    } catch (error) {
-      this.setAttribute('editable', 'true');
-      throw error;
     } finally {
+      this.setAttribute('editable', 'true');
       if (target) {
         target.disabled = false;
       }

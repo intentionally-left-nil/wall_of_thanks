@@ -1,7 +1,10 @@
+use base64::{self, Engine};
 use clap::{self, Parser};
+use rand::Rng;
 use regex::Regex;
 use rusqlite;
 use serde;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::error::Error;
 use std::io::Cursor;
@@ -16,6 +19,43 @@ struct Comment {
     author: String,
     created_at: String,
     approved: bool,
+    #[serde(
+        deserialize_with = "parse_secret",
+        serialize_with = "encode_secret",
+        skip_serializing_if = "is_secret_empty"
+    )]
+    secret: [u8; 16],
+}
+
+fn decode_secret(b64_secret: String) -> Result<[u8; 16], Box<dyn Error>> {
+    let mut secret = [0u8; 16];
+    let num_bytes =
+        base64::engine::general_purpose::STANDARD_NO_PAD.decode_slice(b64_secret, &mut secret)?;
+    if num_bytes == 16 {
+        return Ok(secret);
+    } else {
+        return Err("Invalid secret length".into());
+    }
+}
+
+fn parse_secret<'de, D>(deserializer: D) -> Result<[u8; 16], D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let b64_secret = String::deserialize(deserializer)?;
+    return decode_secret(b64_secret).map_err(serde::de::Error::custom);
+}
+
+fn encode_secret<S>(secret: &[u8; 16], serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let b64_secret = base64::engine::general_purpose::STANDARD_NO_PAD.encode(secret);
+    return b64_secret.to_string().serialize(serializer);
+}
+
+fn is_secret_empty(secret: &[u8; 16]) -> bool {
+    return secret.iter().all(|&b| b == 0);
 }
 
 #[derive(serde::Deserialize)]
@@ -34,14 +74,15 @@ struct UpdateComment {
 type RouteResponse = Response<Cursor<Vec<u8>>>;
 
 // Keep in sync with row_to_comment
-const ROW_QUERY: &str = "id, message, author, approved, created_at";
+const ROW_QUERY: &str = "id, secret, message, author, approved, created_at";
 fn row_to_comment(row: &rusqlite::Row) -> Result<Comment, rusqlite::Error> {
     return Ok(Comment {
         id: row.get(0)?,
-        message: row.get(1)?,
-        author: row.get(2)?,
-        approved: row.get(3)?,
-        created_at: row.get(4)?,
+        secret: row.get(1)?,
+        message: row.get(2)?,
+        author: row.get(3)?,
+        approved: row.get(4)?,
+        created_at: row.get(5)?,
     });
 }
 
@@ -93,15 +134,22 @@ fn list_comments(
     conn: &rusqlite::Connection,
     admin_password: &str,
 ) -> Result<RouteResponse, Box<dyn Error>> {
-    let mut statement = conn.prepare(&format!("SELECT {} FROM comments", ROW_QUERY))?;
-    if check_authorization(request, admin_password) {
-        statement = conn.prepare(&format!(
+    let mut statement = match is_admin(request, admin_password) {
+        true => conn.prepare(&format!("SELECT {} FROM comments", ROW_QUERY))?,
+        false => conn.prepare(&format!(
             "SELECT {} FROM comments WHERE approved = 1",
             ROW_QUERY
-        ))?;
-    }
-    let comments: Result<Vec<Comment>, _> = statement.query_map([], row_to_comment)?.collect();
-    return respond_with_json(200, &comments?);
+        ))?,
+    };
+    let mut comments = statement
+        .query_map([], row_to_comment)?
+        .collect::<Result<Vec<Comment>, _>>()?;
+
+    comments.iter_mut().for_each(|comment| {
+        comment.secret = [0u8; 16];
+    });
+
+    return respond_with_json(200, &comments);
 }
 
 fn create_comment(
@@ -113,14 +161,16 @@ fn create_comment(
         Err(e) => return respond_with_json(400, &e.to_string()),
     };
     let mut statement = conn.prepare(&format!(
-        "INSERT INTO comments (message, author) VALUES (?1, ?2) RETURNING {}",
+        "INSERT INTO comments (message, author, secret) VALUES (?1, ?2, ?3) RETURNING {}",
         ROW_QUERY
     ))?;
-    let inserted = statement.query_row([&comment.message, &comment.author], row_to_comment)?;
+    let secret: [u8; 16] = rand::thread_rng().gen();
+    let params: [&dyn rusqlite::ToSql; 3] = [&comment.message, &comment.author, &secret];
+    let inserted = statement.query_row(params, row_to_comment)?;
     return respond_with_json(201, &inserted);
 }
 
-fn check_authorization(request: &Request, admin_password: &str) -> bool {
+fn get_auth_token(request: &Request) -> Option<&str> {
     let auth_header = request
         .headers()
         .iter()
@@ -131,17 +181,38 @@ fn check_authorization(request: &Request, admin_password: &str) -> bool {
             if header.value.len() < prefix.len()
                 || header.value.as_str()[..prefix.len()].to_lowercase() != prefix
             {
-                false;
+                return None;
             }
             let incoming_password = &header.value.as_str()[prefix.len()..];
-            bool::from(
-                incoming_password
-                    .as_bytes()
-                    .ct_eq(admin_password.as_bytes()),
-            )
+            return Some(incoming_password);
         }
+        None => None,
+    };
+}
+
+fn is_admin(request: &Request, admin_password: &str) -> bool {
+    return match get_auth_token(request) {
+        Some(token) => bool::from(token.as_bytes().ct_eq(admin_password.as_bytes())),
         None => false,
     };
+}
+
+fn is_author(request: &Request, comment_id: i64, conn: &rusqlite::Connection) -> bool {
+    let result: Result<bool, Box<dyn Error>> = (|| match get_auth_token(request) {
+        Some(token) => {
+            let secret = decode_secret(token.to_string())?;
+            let mut statement = conn.prepare("SELECT secret FROM comments WHERE id = ?1")?;
+            let params: [&dyn rusqlite::ToSql; 1] = [&comment_id];
+            let stored_secret: [u8; 16] = statement.query_row(params, |row| row.get(0))?;
+            return Ok(bool::from(secret.ct_eq(&stored_secret)));
+        }
+        None => Ok(false),
+    })();
+
+    match result {
+        Ok(val) => val,
+        Err(_) => false,
+    }
 }
 
 fn update_comment(
@@ -150,9 +221,12 @@ fn update_comment(
     admin_password: &str,
     conn: &rusqlite::Connection,
 ) -> Result<RouteResponse, Box<dyn Error>> {
-    if !check_authorization(request, admin_password) {
+    let admin = is_admin(request, admin_password);
+    let authorized = admin || is_author(request, id, conn);
+    if !authorized {
         return respond_with_json(401, "Unauthorized");
     }
+
     let updates: UpdateComment = match read_json(request) {
         Ok(comment) => comment,
         Err(e) => return respond_with_json(400, &e.to_string()),
@@ -164,7 +238,7 @@ fn update_comment(
     let message = updates.message.clone().unwrap_or_default();
     let author = updates.author.clone().unwrap_or_default();
 
-    if updates.approved.is_some() {
+    if updates.approved.is_some() && admin {
         values.push(&approved);
         if values.len() > 1 {
             query.push_str(", ");
@@ -199,6 +273,7 @@ fn initialize_database(path: &Path) -> Result<rusqlite::Connection, Box<dyn Erro
     conn.execute(
         "CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        secret BLOB NOT NULL,
         message TEXT NOT NULL,
         author TEXT,
         approved BOOLEAN NOT NULL DEFAULT 0,
@@ -237,7 +312,7 @@ fn start_server(
                         .unwrap(),
                 );
                 response.add_header(
-                    "Access-Control-Allow-Headers: Content-Type"
+                    "Access-Control-Allow-Headers: Authorization, Accept, Content-Type"
                         .parse::<Header>()
                         .unwrap(),
                 );

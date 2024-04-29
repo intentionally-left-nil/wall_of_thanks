@@ -8,10 +8,17 @@ getComments().then((comments) => {
   if (leftColumn == null || rightColumn == null) {
     return;
   }
+
+  const isAdmin = localStorage.getItem('token') != null;
+  const newComment = document.createElement('a-comment') as CommentElement;
+  newComment.setAttribute('editable', 'true');
+  leftColumn.appendChild(newComment);
   comments.forEach((comment, index) => {
     const element = document.createElement('a-comment') as CommentElement;
     element.comment = comment;
-    element.setAttribute('editable', 'true');
+    if (isAdmin) {
+      element.setAttribute('editable', 'true');
+    }
     if (index % 2 === 0) {
       leftColumn.appendChild(element);
     } else {
