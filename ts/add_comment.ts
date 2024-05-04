@@ -17,7 +17,7 @@ export default class AddCommentElement extends HTMLElement {
   }
 
   onAddComment(e: Event) {
-    const event = new CustomEvent('create-comment', {
+    const event = new CustomEvent('new-comment', {
       bubbles: true,
       composed: true,
     });

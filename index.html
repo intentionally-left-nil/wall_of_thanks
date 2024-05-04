@@ -192,12 +192,41 @@
       <button id="add-comment">+</button>
     </div>
   </template>
-  <div id="left-letterbox" class="letterbox">
-    <my-add-comment></my-add-comment>
-  </div>
-  <img id="hero" src="/images/hero_full.jpeg" />
-  <div id="right-letterbox" class="letterbox">
-  </div>
+  <template id="app-template">
+    <style>
+      #root {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: black;
+      }
+
+      #hero {
+        object-fit: contain;
+        height: 100vh;
+      }
+
+      .letterbox {
+        flex-basis: 0;
+        flex-grow: 1;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+
+      }
+    </style>
+    <div id="root">
+      <div id="left-letterbox" class="letterbox">
+        <my-add-comment></my-add-comment>
+      </div>
+      <img id="hero" src="/images/hero_full.jpeg" />
+      <div id="right-letterbox" class="letterbox">
+      </div>
+    </div>
+  </template>
+  <my-app />
 </body>
 
 </html>
