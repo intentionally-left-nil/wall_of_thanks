@@ -1,6 +1,11 @@
 import CommentElement from './comment.js';
+import AddCommentElement from './add_comment.js';
 import { getComments } from './backend.js';
-customElements.define('a-comment', CommentElement);
+
+document.addEventListener('DOMContentLoaded', () => {
+  customElements.define('my-comment', CommentElement);
+  customElements.define('my-add-comment', AddCommentElement);
+});
 
 getComments().then((comments) => {
   const leftColumn = document.getElementById('left-letterbox');
@@ -10,7 +15,7 @@ getComments().then((comments) => {
   }
 
   const isAdmin = localStorage.getItem('token') != null;
-  const newComment = document.createElement('a-comment') as CommentElement;
+  const newComment = document.createElement('my-comment') as CommentElement;
   newComment.setAttribute('editable', 'true');
   leftColumn.appendChild(newComment);
 
@@ -19,7 +24,7 @@ getComments().then((comments) => {
   );
 
   comments.forEach((comment, index) => {
-    const element = document.createElement('a-comment') as CommentElement;
+    const element = document.createElement('my-comment') as CommentElement;
     element.style.visibility = 'hidden';
     element.comment = comment;
     if (isAdmin) {

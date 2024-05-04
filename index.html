@@ -167,7 +167,33 @@
       </div>
       <div>
   </template>
+  <template id="add-comment-template">
+    <style>
+      #add-comment {
+        display: block;
+        margin: 10px;
+        background-color: #4B2E83;
+        border: 1px solid black;
+        border-radius: 15px;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 14px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+      }
+
+      #add-comment:hover {
+        background-color: #39256c;
+      }
+    </style>
+    <div>
+      <button id="add-comment">+</button>
+    </div>
+  </template>
   <div id="left-letterbox" class="letterbox">
+    <my-add-comment></my-add-comment>
   </div>
   <img id="hero" src="/images/hero_full.jpeg" />
   <div id="right-letterbox" class="letterbox">
