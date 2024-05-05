@@ -17,13 +17,15 @@ export default class App extends HTMLElement {
   }
 
   onNewComment(e: Event) {
-    const leftColumn = this.shadowRoot!.querySelector('#left-letterbox');
-    if (leftColumn == null) {
+    const addComment = this.shadowRoot!.querySelector('#add-comment');
+    if (addComment == null) {
       return;
     }
-    const newComment = document.createElement('my-comment') as CommentElement;
-    newComment.setAttribute('editable', 'true');
-    leftColumn.appendChild(newComment);
+    const commentHTML = `
+  <div class="slide-down">
+    <my-comment editable="true"></my-comment>
+  </div>`;
+    addComment.insertAdjacentHTML('afterend', commentHTML);
   }
 }
 

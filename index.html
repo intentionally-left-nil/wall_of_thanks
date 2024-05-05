@@ -16,20 +16,6 @@
         display: none;
       }
 
-      @keyframes fade-in {
-        from {
-          opacity: 0;
-        }
-
-        to {
-          opacity: 1;
-        }
-      }
-
-      .fade-in {
-        animation: fade-in 5s;
-      }
-
       #container {
         display: flex;
       }
@@ -154,7 +140,7 @@
         border-color: red !important;
       }
     </style>
-    <div id="container" class="fade-in">
+    <div id="container">
       <div id="offset"></div>
       <div id="comment-container">
         <p id="message"></p>
@@ -214,12 +200,30 @@
         overflow: hidden;
         width: 100%;
         height: 100%;
+      }
 
+      @keyframes slideDown {
+        from {
+          grid-template-rows: 0fr;
+        }
+
+        to {
+          grid-template-rows: 1fr;
+        }
+      }
+
+      .slide-down {
+        display: grid;
+        animation: slideDown 1s forwards;
+      }
+
+      .slide-down>* {
+        overflow: hidden;
       }
     </style>
     <div id="root">
       <div id="left-letterbox" class="letterbox">
-        <my-add-comment></my-add-comment>
+        <my-add-comment id="add-comment"></my-add-comment>
       </div>
       <img id="hero" src="/images/hero_full.jpeg" />
       <div id="right-letterbox" class="letterbox">
