@@ -44,11 +44,20 @@ export default class LetterboxElement extends HTMLElement {
 
     while (children.length > 1 && root.scrollHeight > root.offsetHeight) {
       const lastChild: HTMLElement = children.pop() as HTMLElement;
+      const removeEvent = new CustomEvent('element-removed', {
+        detail: { target: lastChild },
+        bubbles: true,
+        composed: true,
+      });
       if (lastChild.offsetTop > root.offsetHeight) {
         lastChild.remove();
+        this.dispatchEvent(removeEvent);
       } else {
-        lastChild!.classList.add('fade-out');
-        lastChild!.addEventListener('animationend', () => lastChild?.remove());
+        lastChild.classList.add('fade-out');
+        lastChild.addEventListener('animationend', () => {
+          lastChild.remove();
+          this.dispatchEvent(removeEvent);
+        });
         break;
       }
     }

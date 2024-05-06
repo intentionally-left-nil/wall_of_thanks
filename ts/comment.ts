@@ -74,6 +74,10 @@ export default class CommentElement extends HTMLElement {
     }
   }
 
+  get comment(): Comment | null {
+    return this._comment;
+  }
+
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (oldValue === newValue) {
       return;

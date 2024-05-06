@@ -3,6 +3,8 @@ import type { Comment } from './types.js';
 import CommentElement from './comment.js';
 export default class App extends HTMLElement {
   comments: Comment[] = [];
+  insertTimer: number | null = null;
+  loadCommentsTimer: number | null = null;
   constructor() {
     super();
     this.loadComments();
@@ -16,6 +18,7 @@ export default class App extends HTMLElement {
       template.content.cloneNode(true)
     );
     this.addEventListener('new-comment', this.onNewComment.bind(this));
+    this.addEventListener('element-removed', this.onElementRemoved.bind(this));
   }
 
   onNewComment(e: Event) {
@@ -31,6 +34,11 @@ export default class App extends HTMLElement {
   }
 
   async loadComments() {
+    if (this.loadCommentsTimer) {
+      window.clearTimeout(this.loadCommentsTimer);
+      this.loadCommentsTimer = null;
+    }
+
     this.comments = await getComments();
 
     if (isAdmin()) {
@@ -40,10 +48,15 @@ export default class App extends HTMLElement {
     } else {
       shuffleInPlace(this.comments);
     }
-    this.showComment();
+    this.insertComment();
   }
 
-  showComment() {
+  insertComment() {
+    if (this.insertTimer) {
+      window.clearTimeout(this.insertTimer);
+      this.insertTimer = null;
+    }
+
     const leftColumn = this.shadowRoot!.querySelector(
       '#left-letterbox'
     ) as HTMLElement | null;
@@ -61,25 +74,64 @@ export default class App extends HTMLElement {
 
     const comment = this.comments.pop();
     if (!comment) {
+      if (!this.loadCommentsTimer) {
+        this.loadCommentsTimer = window.setTimeout(
+          this.loadComments.bind(this),
+          30000
+        );
+      }
       return;
     }
 
     const newComment = document.createElement('my-comment') as CommentElement;
-    newComment.classList.add('fade-in');
     newComment.comment = comment;
     if (isAdmin()) {
       newComment.setAttribute('editable', 'true');
     }
 
+    let inserted = false;
     for (const column of columns) {
       newComment.style.visibility = 'hidden';
+      let index = Math.floor(Math.random() * column.children.length);
       column.appendChild(newComment);
-      if (column.scrollHeight <= column.offsetHeight) {
+      // TODO: For some reason, at least on FF the scrollheight is 10 greater than the offsetHeight but only for the left column. idkbbqsauce
+      if (column.scrollHeight <= column.offsetHeight + 50) {
         newComment.style.removeProperty('visibility');
+        this.insertTimer = window.setTimeout(
+          this.insertComment.bind(this),
+          5000
+        );
+        newComment.classList.add('fade-in');
+        inserted = true;
         break;
       } else {
         column.removeChild(newComment);
       }
+    }
+
+    if (!inserted) {
+      // We couldn't insert to the end without scrolling. So, just pick a random place in the first column and insert it anyways
+      // The letterbox will then drop off the last item with a fade out. This is how we cycle the items.
+      const column = columns[0];
+      const index = 1 + Math.floor(Math.random() * column.children.length);
+      newComment.style.removeProperty('visibility');
+      column.insertBefore(newComment, column.children[index]);
+      this.insertTimer = window.setTimeout(
+        this.insertComment.bind(this),
+        30000
+      );
+    }
+  }
+
+  onElementRemoved(e: Event) {
+    if (!(e instanceof CustomEvent)) {
+      return;
+    }
+    const { target }: { target: HTMLElement } = e.detail;
+    const comment = target.querySelector('my-comment') as CommentElement | null;
+    const id = comment?.comment?.id;
+    if (id) {
+      this.comments = this.comments.filter((c) => c.id !== id);
     }
   }
 }
