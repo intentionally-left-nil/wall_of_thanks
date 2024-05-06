@@ -178,6 +178,31 @@
       <button id="add-comment">+</button>
     </div>
   </template>
+  <template id="letterbox-template">
+    <style>
+      #root {
+        height: 100%;
+      }
+
+      @keyframes fade-out {
+        from {
+          opacity: 1;
+        }
+
+        to {
+          opacity: 0;
+        }
+      }
+
+      ::slotted(.fade-out) {
+        animation: fade-out 1s !important;
+      }
+    </style>
+    <div id="root">
+      <slot>
+      </slot>
+    </div>
+  </template>
   <template id="app-template">
     <style>
       #root {
@@ -201,6 +226,7 @@
         width: 100%;
         height: 100%;
       }
+
 
       @keyframes slideDown {
         from {
@@ -231,17 +257,30 @@
         animation: fade-in 5s;
       }
 
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .fade-in {
+        animation: fade-in 5s;
+      }
+
       .slide-down>* {
         overflow: hidden;
       }
     </style>
     <div id="root">
-      <div id="left-letterbox" class="letterbox">
+      <my-letterbox id="left-letterbox" class="letterbox">
         <my-add-comment id="add-comment"></my-add-comment>
-      </div>
+      </my-letterbox>
       <img id="hero" src="/images/hero_full.jpeg" />
-      <div id="right-letterbox" class="letterbox">
-      </div>
+      <my-letterbox id="right-letterbox" class="letterbox"></my-letterbox>
     </div>
   </template>
   <my-app />
