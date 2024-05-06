@@ -2,8 +2,10 @@ import { getComments } from './backend.js';
 import type { Comment } from './types.js';
 import CommentElement from './comment.js';
 export default class App extends HTMLElement {
+  comments: Comment[] = [];
   constructor() {
     super();
+    this.loadComments();
 
     const node = document.getElementById('app-template');
     if (node == null || !(node instanceof HTMLTemplateElement)) {
@@ -27,37 +29,68 @@ export default class App extends HTMLElement {
   </div>`;
     addComment.insertAdjacentHTML('afterend', commentHTML);
   }
+
+  async loadComments() {
+    this.comments = await getComments();
+
+    if (isAdmin()) {
+      this.comments.sort((a, b) =>
+        a.approved === b.approved ? 0 : a.approved ? 1 : -1
+      );
+    } else {
+      shuffleInPlace(this.comments);
+    }
+    this.showComment();
+  }
+
+  showComment() {
+    const leftColumn = this.shadowRoot!.querySelector(
+      '#left-letterbox'
+    ) as HTMLElement | null;
+    const rightColumn = this.shadowRoot!.querySelector(
+      '#right-letterbox'
+    ) as HTMLElement | null;
+
+    if (!leftColumn || !rightColumn) {
+      return;
+    }
+    const columns =
+      Math.random() < 0.5
+        ? [leftColumn, rightColumn]
+        : [rightColumn, leftColumn];
+
+    const comment = this.comments.pop();
+    if (!comment) {
+      return;
+    }
+
+    const newComment = document.createElement('my-comment') as CommentElement;
+    newComment.classList.add('fade-in');
+    newComment.comment = comment;
+    if (isAdmin()) {
+      newComment.setAttribute('editable', 'true');
+    }
+
+    for (const column of columns) {
+      newComment.style.visibility = 'hidden';
+      column.appendChild(newComment);
+      if (column.scrollHeight <= column.offsetHeight) {
+        newComment.style.removeProperty('visibility');
+        break;
+      } else {
+        column.removeChild(newComment);
+      }
+    }
+  }
 }
 
-// getComments().then((comments) => {
-//   const leftColumn = document.getElementById('left-letterbox');
-//   const rightColumn = document.getElementById('right-letterbox');
-//   if (leftColumn == null || rightColumn == null) {
-//     return;
-//   }
+function shuffleInPlace(arr: any[]) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * i);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
 
-//   const isAdmin = localStorage.getItem('token') != null;
-//   const newComment = document.createElement('my-comment') as CommentElement;
-//   newComment.setAttribute('editable', 'true');
-//   leftColumn.appendChild(newComment);
-
-//   comments.sort((a, b) =>
-//     a.approved === b.approved ? 0 : a.approved ? 1 : -1
-//   );
-
-//   comments.forEach((comment, index) => {
-//     const element = document.createElement('my-comment') as CommentElement;
-//     element.style.visibility = 'hidden';
-//     element.comment = comment;
-//     if (isAdmin) {
-//       element.setAttribute('editable', 'true');
-//     }
-//     const column = index % 2 === 0 ? leftColumn : rightColumn;
-//     column.appendChild(element);
-//     if (column.scrollHeight <= column.offsetHeight) {
-//       element.style.removeProperty('visibility');
-//     } else {
-//       column.removeChild(element);
-//     }
-//   });
-// });
+function isAdmin(): boolean {
+  return localStorage.getItem('token') != null;
+}

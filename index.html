@@ -13,7 +13,7 @@
   <template id="comment-template">
     <style>
       .hidden {
-        display: none;
+        display: none !important;
       }
 
       #container {
@@ -215,6 +215,20 @@
       .slide-down {
         display: grid;
         animation: slideDown 1s forwards;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .fade-in {
+        animation: fade-in 5s;
       }
 
       .slide-down>* {
