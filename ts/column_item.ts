@@ -25,23 +25,49 @@ export default class ColumnItem extends HTMLElement {
 
   template() {
     return `<style>
-  @keyframes fade-out {
+  @keyframes slideDown {
     from {
-      opacity: 1;
+      grid-template-rows: 0fr;
     }
 
     to {
-      opacity: 0;
+      grid-template-rows: 1fr;
     }
   }
 
-  ::slotted(.fade-out) {
-    animation: fade-out 1s !important;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  #root {
+    display: grid;
+    grid-template-rows: 0fr;
+  }
+
+  #root.expanded {
+    grid-template-rows: 1fr;
+  }
+
+  #root.slide-in {
+    animation: slideDown 1s forwards;
+  }
+
+  #root.fade-in {
+    animation: fade-in 5s;
+  }
+
+  ::slotted(*) {
+    overflow: hidden;
   }
 </style>
 <div id="root">
-  <slot>
-  </slot>
+  <slot></slot>
 </div>`;
   }
 }
