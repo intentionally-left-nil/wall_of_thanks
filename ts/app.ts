@@ -16,7 +16,7 @@ export default class App extends HTMLElement {
     this.addEventListener('new-comment', this.onNewComment.bind(this));
     this.addEventListener('element-removed', this.onElementRemoved.bind(this));
     this.addEventListener(
-      'content-submitted',
+      'comment-submitted',
       this.onContentSubmitted.bind(this)
     );
 
