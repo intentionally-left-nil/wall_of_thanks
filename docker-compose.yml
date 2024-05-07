@@ -20,6 +20,7 @@ services:
       - db:/data/db
     env_file:
       - .env
+    init: true
 
   frontend_published:
     profiles:
@@ -40,6 +41,7 @@ services:
       - db:/data/db
     env_file:
       - .env
+    init: true
 
 volumes:
   db:
