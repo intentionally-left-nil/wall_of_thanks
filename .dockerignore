@@ -1,3 +1,5 @@
 js/
 images/
 backend/
+docker-compose.yml
+.git

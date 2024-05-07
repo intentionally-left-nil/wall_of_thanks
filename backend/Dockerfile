@@ -16,4 +16,4 @@ COPY --from=builder /usr/src/wall_of_thanks/target/release/wall_of_thanks /usr/l
 RUN chmod +x /usr/local/bin/wall_of_thanks
 
 # Run the binary when the container launches
-CMD /usr/local/bin/wall_of_thanks --secret "$admin_secret" --port 8000 --db-path /data/db.sqlite3 --frontend-origin "$frontend_origin"
+CMD /usr/local/bin/wall_of_thanks --secret "$admin_secret" --port 8000 --db-path /data/db/db.sqlite3 --frontend-origin "$frontend_origin"

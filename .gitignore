@@ -142,3 +142,6 @@ backend/debug/
 **/*.rs.bk
 *.pdb
 *.db
+
+# Environment files
+.env

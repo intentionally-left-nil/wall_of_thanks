@@ -1,0 +1,45 @@
+services:
+  frontend:
+    profiles:
+      - dev
+    build:
+      context: .
+    ports:
+      - '8000:80'
+    volumes:
+      - ./images/:/usr/share/nginx/html/images
+
+  backend:
+    profiles:
+      - dev
+    build:
+      context: ./backend
+    ports:
+      - '8001:8000'
+    volumes:
+      - db:/data/db
+    env_file:
+      - .env
+
+  frontend_published:
+    profiles:
+      - prod
+    image: ghcr.io/intentionally-left-nil/wall_of_thanks-frontend:main
+    ports:
+      - '8000:80'
+    volumes:
+      - ./images/:/usr/share/nginx/html/images
+
+  backend_published:
+    profiles:
+      - prod
+    image: ghcr.io/intentionally-left-nil/wall_of_thanks-backend:main
+    ports:
+      - '8001:8000'
+    volumes:
+      - db:/data/db
+    env_file:
+      - .env
+
+volumes:
+  db:
