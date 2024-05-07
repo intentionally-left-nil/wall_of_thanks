@@ -1,5 +1,6 @@
 import { createComment, editComment } from './backend.js';
 import type { Comment } from './types.js';
+import { loadTemplate, isAdmin } from './utils.js';
 export default class CommentElement extends HTMLElement {
   static get observedAttributes() {
     return ['editable'];
@@ -8,16 +9,8 @@ export default class CommentElement extends HTMLElement {
   _comment: Comment | null;
   constructor() {
     super();
+    loadTemplate(this, this.template(), 'comment');
     this._comment = null;
-    const node = document.getElementById('comment-template');
-    if (node == null || !(node instanceof HTMLTemplateElement)) {
-      throw new Error('comment-template not found');
-    }
-    const template: HTMLTemplateElement = node;
-    this.attachShadow({ mode: 'open' }).appendChild(
-      template.content.cloneNode(true)
-    );
-
     const shadowRoot = this.shadowRoot!;
 
     const message = shadowRoot.querySelector('#message') as HTMLElement | null;
@@ -42,7 +35,7 @@ export default class CommentElement extends HTMLElement {
       submit.addEventListener('click', this.onSubmit.bind(this));
     }
 
-    if (localStorage.getItem('token')) {
+    if (isAdmin()) {
       const approvedRow = shadowRoot.querySelector('#approved-row');
       if (approvedRow) {
         approvedRow.classList.remove('hidden');
@@ -165,5 +158,153 @@ export default class CommentElement extends HTMLElement {
         target.disabled = false;
       }
     }
+  }
+
+  template() {
+    return `<style>
+  .hidden {
+    display: none !important;
+  }
+
+  #container {
+    display: flex;
+  }
+
+  #offset {
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: 10%;
+  }
+
+  #comment-container {
+    display: inline-block;
+    /* flex-shrink: 0; */
+    padding: 10px;
+    padding: 10px;
+    margin: 50px;
+    min-width: 200px;
+    max-width: 500px;
+    width: 100%;
+    border: 1px solid black;
+    border-radius: 15px;
+    background: white;
+  }
+
+  [contenteditable]:read-write {
+    border-style: dashed;
+    border-width: 1px;
+    border-color: #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+
+  [contenteditable]:read-write:hover {
+    border-color: #888;
+  }
+
+  [contenteditable]:read-write:focus {
+    outline: none;
+    border-color: #007BFF;
+    background-color: #e6f0ff;
+  }
+
+  #message {
+    font-size: 1em;
+    padding: 10px;
+    max-height: 10em;
+    overflow: auto;
+  }
+
+  #message:read-write {
+    min-height: 3.6em;
+  }
+
+  #author {
+    display: inline-block;
+    font-size: 1em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: left;
+  }
+
+  #author:read-write {
+    min-width: 6em;
+  }
+
+  #author:read-write:empty::before {
+    content: "Author";
+    color: #ccc;
+  }
+
+  :dir(ltr) #author {
+    padding-left: 6px;
+    padding-right: 10px;
+    margin-left: 4px;
+  }
+
+  :dir(rtl) #author {
+    margin-right: 4px;
+    padding-right: 6px;
+    padding-left: 10px;
+  }
+
+  #author-container {
+    text-align: right;
+  }
+
+  :host(:not([editable="true"])) #submit {
+    display: none;
+  }
+
+  #approved-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  #approved-row label {
+    font-size: 0.7em;
+    color: #333;
+  }
+
+  #submit {
+    display: block;
+    margin-right: 0;
+    margin-left: auto;
+    background-color: #4B2E83;
+    border: 1px solid black;
+    border-radius: 15px;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 14px;
+    transition-duration: 0.4s;
+    cursor: pointer;
+  }
+
+  #submit:hover {
+    background-color: #39256c;
+  }
+
+  .error {
+    border-color: red !important;
+  }
+</style>
+<div id="container">
+  <div id="offset"></div>
+  <div id="comment-container">
+    <p id="message"></p>
+    <p id="author-container">&mdash;<span id="author"></span></p>
+    <div id="approved-row" class="hidden">
+      <label for="approved">Approved?</label>
+      <input type="checkbox" id="approved" name="approved" />
+    </div>
+    <button id="submit">Submit</button>
+  </div>
+<div>`;
   }
 }

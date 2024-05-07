@@ -1,6 +1,7 @@
 import { getComments } from './backend.js';
 import type { Comment } from './types.js';
 import CommentElement from './comment.js';
+import { isAdmin, loadTemplate } from './utils.js';
 export default class App extends HTMLElement {
   comments: Comment[] = [];
   insertTimer: number | null = null;
@@ -9,16 +10,9 @@ export default class App extends HTMLElement {
 
   constructor() {
     super();
+    loadTemplate(this, this.template(), 'app');
     this.loadComments();
 
-    const node = document.getElementById('app-template');
-    if (node == null || !(node instanceof HTMLTemplateElement)) {
-      throw new Error('app-template not found');
-    }
-    const template: HTMLTemplateElement = node;
-    this.attachShadow({ mode: 'open' }).appendChild(
-      template.content.cloneNode(true)
-    );
     this.addEventListener('new-comment', this.onNewComment.bind(this));
     this.addEventListener('element-removed', this.onElementRemoved.bind(this));
     this.addEventListener(
@@ -172,6 +166,70 @@ export default class App extends HTMLElement {
       this.insertTimer = window.setTimeout(this.insertComment.bind(this), 5000);
     }
   }
+
+  template() {
+    return `<style>
+  #root {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: black;
+    flex-direction: row;
+  }
+
+  #hero {
+    object-fit: contain;
+    height: 100vh;
+  }
+
+  #right-letterbox {
+    display: none;
+  }
+
+  @media (max-width: 1000px) {
+    #root {
+      flex-direction: column;
+    }
+
+    #left-letterbox {
+      order: 1;
+    }
+
+    #hero {
+      width: 100%;
+      max-width: 800px;
+      max-height: 300px;
+      object-fit: cover;
+      object-position: center 33%;
+      height: auto;
+      order: 0
+    }
+  }
+
+  @media(min-width: 1500px) {
+    #right-letterbox {
+      display: block;
+    }
+  }
+
+  .letterbox {
+    flex-basis: 0;
+    flex-grow: 1;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+<div id="root">
+  <my-letterbox id="left-letterbox" class="letterbox">
+    <my-add-comment id="add-comment"></my-add-comment>
+  </my-letterbox>
+  <img id="hero" src="/images/hero_full.jpeg" />
+  <my-letterbox id="right-letterbox" class="letterbox"></my-letterbox>
+</div>`;
+  }
 }
 
 function shuffleInPlace(arr: any[]) {
@@ -179,8 +237,4 @@ function shuffleInPlace(arr: any[]) {
     const j = Math.floor(Math.random() * i);
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-}
-
-function isAdmin(): boolean {
-  return localStorage.getItem('token') != null;
 }

@@ -1,17 +1,11 @@
+import { loadTemplate } from './utils.js';
 export default class AddCommentElement extends HTMLElement {
   static get observedAttributes() {
     return ['disabled'];
   }
   constructor() {
     super();
-    const node = document.getElementById('add-comment-template');
-    if (node == null || !(node instanceof HTMLTemplateElement)) {
-      throw new Error('add-comment-template not found');
-    }
-    const template: HTMLTemplateElement = node;
-    this.attachShadow({ mode: 'open' }).appendChild(
-      template.content.cloneNode(true)
-    );
+    loadTemplate(this, this.template(), 'add-comment');
     const shadowRoot = this.shadowRoot!;
     const addComment = shadowRoot.querySelector('#add-comment');
     if (addComment) {
@@ -42,5 +36,36 @@ export default class AddCommentElement extends HTMLElement {
     } else {
       addComment.setAttribute('disabled', '');
     }
+  }
+
+  template() {
+    return `<style>
+    #add-comment {
+      display: block;
+      margin: 10px;
+      background-color: #4B2E83;
+      border: 1px solid black;
+      border-radius: 15px;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 14px;
+      transition-duration: 0.4s;
+      cursor: pointer;
+    }
+
+    #add-comment:hover {
+      background-color: #39256c;
+    }
+
+    #add-comment:disabled {
+      background-color: #D8BFD8;
+      color: white;
+    }
+</style>
+<div>
+  <button id="add-comment">+</button>
+</div>`;
   }
 }

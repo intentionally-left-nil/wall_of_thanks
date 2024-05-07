@@ -1,16 +1,10 @@
+import { loadTemplate } from './utils.js';
 export default class LetterboxElement extends HTMLElement {
   removeTimer: number | null;
   constructor() {
     super();
     this.removeTimer = null;
-    const node = document.getElementById('letterbox-template');
-    if (node == null || !(node instanceof HTMLTemplateElement)) {
-      throw new Error('letterbox-template not found');
-    }
-    const template: HTMLTemplateElement = node;
-    this.attachShadow({ mode: 'open' }).appendChild(
-      template.content.cloneNode(true)
-    );
+    loadTemplate(this, this.template(), 'letterbox');
   }
 
   connectedCallback() {
@@ -21,7 +15,6 @@ export default class LetterboxElement extends HTMLElement {
   }
 
   onSlotChange(e: Event) {
-    console.log('Slot changed', e);
     if (!this.removeTimer) {
       this.removeTimer = window.setTimeout(
         this.removeExcessChildren.bind(this),
@@ -61,5 +54,32 @@ export default class LetterboxElement extends HTMLElement {
         break;
       }
     }
+  }
+  template() {
+    return `
+<style>
+  #root {
+    height: 100%;
+  }
+
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  ::slotted(.fade-out) {
+    animation: fade-out 1s !important;
+  }
+</style>
+<div id="root">
+  <slot>
+  </slot>
+</div>
+`;
   }
 }

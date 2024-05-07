@@ -1,3 +1,4 @@
+import { loadTemplate } from './utils.js';
 export default class ColumnItem extends HTMLElement {
   static get observedAttributes() {
     return ['expanded', 'slide-in', 'fade-in'];
@@ -5,15 +6,7 @@ export default class ColumnItem extends HTMLElement {
 
   constructor() {
     super();
-    const node = document.getElementById('column-item-template');
-    if (node == null || !(node instanceof HTMLTemplateElement)) {
-      throw new Error('column-item-template not found');
-    }
-
-    const template: HTMLTemplateElement = node;
-    this.attachShadow({ mode: 'open' }).appendChild(
-      template.content.cloneNode(true)
-    );
+    loadTemplate(this, this.template(), 'column-item');
   }
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (oldValue === newValue) {
@@ -28,5 +21,27 @@ export default class ColumnItem extends HTMLElement {
     } else {
       root.classList.remove(name);
     }
+  }
+
+  template() {
+    return `<style>
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  ::slotted(.fade-out) {
+    animation: fade-out 1s !important;
+  }
+</style>
+<div id="root">
+  <slot>
+  </slot>
+</div>`;
   }
 }

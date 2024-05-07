@@ -1,8 +1,9 @@
 import type { Comment } from './types';
+import { getAdminToken } from './utils.js';
 async function getComments(): Promise<Comment[]> {
   const headers = new Headers();
   headers.append('Accept', 'application/json');
-  const adminToken = localStorage.getItem('token');
+  const adminToken = getAdminToken();
   if (adminToken) {
     headers.append('Authorization', `Bearer ${adminToken}`);
   }
@@ -41,7 +42,7 @@ async function editComment(comment: {
   author: string;
   approved: boolean;
 }): Promise<Comment> {
-  const adminToken = localStorage.getItem('token');
+  const adminToken = getAdminToken();
   const payload: {
     id: number;
     message: string;
