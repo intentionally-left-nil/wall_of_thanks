@@ -188,7 +188,7 @@ export default class App extends HTMLElement {
     display: none;
   }
 
-  @media (max-width: 1000px) {
+  @media (max-width: 800px) {
     #root {
       flex-direction: column;
     }
@@ -200,11 +200,19 @@ export default class App extends HTMLElement {
     #hero {
       width: 100%;
       max-width: 800px;
-      max-height: 300px;
+      max-height: 25%;
       object-fit: cover;
       object-position: center 33%;
       height: auto;
       order: 0
+    }
+  }
+
+  @media (min-width: 801px) and (max-width: 1499px) {
+    #hero {
+      max-width: 40%;
+      object-fit: cover;
+      object-position: 20% center;
     }
   }
 
