@@ -19,6 +19,8 @@ export default class App extends HTMLElement {
     );
     this.addEventListener('new-comment', this.onNewComment.bind(this));
     this.addEventListener('element-removed', this.onElementRemoved.bind(this));
+
+    window.addEventListener('resize', () => this.onResize.bind(this));
   }
 
   onNewComment(e: Event) {
@@ -67,8 +69,11 @@ export default class App extends HTMLElement {
     if (!leftColumn || !rightColumn) {
       return;
     }
+
     const columns =
-      Math.random() < 0.5
+      rightColumn.scrollHeight === 0 // The column is hidden
+        ? [leftColumn]
+        : Math.random() < 0.5
         ? [leftColumn, rightColumn]
         : [rightColumn, leftColumn];
 
@@ -97,7 +102,7 @@ export default class App extends HTMLElement {
       columnItem.style.visibility = 'hidden';
       column.appendChild(columnItem);
       // TODO: For some reason, at least on FF the scrollheight is 10 greater than the offsetHeight but only for the left column. idkbbqsauce
-      if (column.scrollHeight <= column.offsetHeight + 50) {
+      if (column.scrollHeight <= column.offsetHeight + 11) {
         columnItem.style.removeProperty('visibility');
         this.insertTimer = window.setTimeout(
           this.insertComment.bind(this),
@@ -115,7 +120,8 @@ export default class App extends HTMLElement {
       // We couldn't insert to the end without scrolling. So, just pick a random place in the first column and insert it anyways
       // The letterbox will then drop off the last item with a fade out. This is how we cycle the items.
       const column = columns[0];
-      const index = 1 + Math.floor(Math.random() * column.children.length);
+      const index =
+        1 + Math.floor(Math.random() * (column.children.length - 1)); // Don't insert before the (+) button and don't insert as the last element
       columnItem.style.removeProperty('visibility');
       columnItem.setAttribute('slide-in', 'true');
       column.insertBefore(columnItem, column.children[index]);
@@ -135,6 +141,12 @@ export default class App extends HTMLElement {
     const id = comment?.comment?.id;
     if (id) {
       this.comments = this.comments.filter((c) => c.id !== id);
+    }
+  }
+
+  onResize() {
+    if (!this.insertTimer) {
+      this.insertTimer = window.setTimeout(this.insertComment.bind(this), 5000);
     }
   }
 }
