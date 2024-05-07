@@ -1,5 +1,6 @@
 use base64::{self, Engine};
 use clap::{self, Parser};
+use ctrlc::set_handler;
 use rand::Rng;
 use regex::Regex;
 use rusqlite;
@@ -9,6 +10,7 @@ use serde_json;
 use std::error::Error;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use subtle::ConstantTimeEq;
 use tiny_http::{Header, Request, Response, Server, StatusCode};
 
@@ -289,10 +291,15 @@ fn start_server(
     frontend_origin: String,
     admin_password: &str,
 ) -> Result<(), Box<dyn Error>> {
-    let server = match Server::http(("0.0.0.0", port)) {
-        Ok(server) => server,
-        Err(e) => return Err(e),
-    };
+    let server =
+        Server::http(("0.0.0.0", port)).map_err(|e| Box::<dyn Error>::from(e.to_string()))?;
+    let server = Arc::new(server);
+    let ctrlc_server = server.clone();
+
+    set_handler(move || {
+        println!("Ctrl-c detected. Shutting down");
+        ctrlc_server.unblock();
+    })?;
     let patch_regex = Regex::new(r"^/(\d+)$")?;
     for mut request in server.incoming_requests() {
         let route = (request.method(), request.url());
