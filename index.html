@@ -215,17 +215,31 @@
         }
       }
 
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
       #root {
         display: grid;
         grid-template-rows: 0fr;
       }
 
-      .expanded {
+      #root.expanded {
         grid-template-rows: 1fr;
       }
 
-      .slide-in {
+      #root.slide-in {
         animation: slideDown 1s forwards;
+      }
+
+      #root.fade-in {
+        animation: fade-in 5s;
       }
 
       ::slotted(*) {
@@ -258,35 +272,6 @@
         overflow: hidden;
         width: 100%;
         height: 100%;
-      }
-
-
-      @keyframes slideDown {
-        from {
-          grid-template-rows: 0fr;
-        }
-
-        to {
-          grid-template-rows: 1fr;
-        }
-      }
-
-      .fade-in {
-        animation: fade-in 5s;
-      }
-
-      @keyframes fade-in {
-        from {
-          opacity: 0;
-        }
-
-        to {
-          opacity: 1;
-        }
-      }
-
-      .fade-in {
-        animation: fade-in 5s;
       }
     </style>
     <div id="root">

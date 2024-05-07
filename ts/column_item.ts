@@ -1,6 +1,6 @@
 export default class ColumnItem extends HTMLElement {
   static get observedAttributes() {
-    return ['expanded', 'slide-in'];
+    return ['expanded', 'slide-in', 'fade-in'];
   }
 
   constructor() {

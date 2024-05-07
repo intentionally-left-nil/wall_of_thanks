@@ -83,29 +83,31 @@ export default class App extends HTMLElement {
       return;
     }
 
+    const columnItem = document.createElement('my-column-item');
+    columnItem.setAttribute('expanded', 'true');
     const newComment = document.createElement('my-comment') as CommentElement;
     newComment.comment = comment;
     if (isAdmin()) {
       newComment.setAttribute('editable', 'true');
     }
+    columnItem.appendChild(newComment);
 
     let inserted = false;
     for (const column of columns) {
-      newComment.style.visibility = 'hidden';
-      let index = Math.floor(Math.random() * column.children.length);
-      column.appendChild(newComment);
+      columnItem.style.visibility = 'hidden';
+      column.appendChild(columnItem);
       // TODO: For some reason, at least on FF the scrollheight is 10 greater than the offsetHeight but only for the left column. idkbbqsauce
       if (column.scrollHeight <= column.offsetHeight + 50) {
-        newComment.style.removeProperty('visibility');
+        columnItem.style.removeProperty('visibility');
         this.insertTimer = window.setTimeout(
           this.insertComment.bind(this),
           5000
         );
-        newComment.classList.add('fade-in');
+        columnItem.setAttribute('fade-in', 'true');
         inserted = true;
         break;
       } else {
-        column.removeChild(newComment);
+        column.removeChild(columnItem);
       }
     }
 
@@ -114,8 +116,9 @@ export default class App extends HTMLElement {
       // The letterbox will then drop off the last item with a fade out. This is how we cycle the items.
       const column = columns[0];
       const index = 1 + Math.floor(Math.random() * column.children.length);
-      newComment.style.removeProperty('visibility');
-      column.insertBefore(newComment, column.children[index]);
+      columnItem.style.removeProperty('visibility');
+      columnItem.setAttribute('slide-in', 'true');
+      column.insertBefore(columnItem, column.children[index]);
       this.insertTimer = window.setTimeout(
         this.insertComment.bind(this),
         30000
