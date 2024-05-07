@@ -44,7 +44,8 @@ Make sure to create an `.env` file with the following contents:
 
 ```sh
 admin_secret='my_secret'
-frontend_origin='my_frontend_domain'
+frontend_origin='my_frontend_domain' # CORS domain for the frontend. Defaults to '*' if not set
+auto_approve='true' # Whether to require an admin to approve the comment before it is visible
 ```
 
 The frontend code expects the backend to be available at `https://api.frontend-domain.com`

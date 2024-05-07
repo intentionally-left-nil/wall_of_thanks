@@ -7,6 +7,7 @@ use rusqlite;
 use serde;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::env;
 use std::error::Error;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
@@ -163,11 +164,14 @@ fn create_comment(
         Err(e) => return respond_with_json(400, &e.to_string()),
     };
     let mut statement = conn.prepare(&format!(
-        "INSERT INTO comments (message, author, secret) VALUES (?1, ?2, ?3) RETURNING {}",
+        "INSERT INTO comments (message, author, approved, secret) VALUES (?1, ?2, ?3, ?4) RETURNING {}",
         ROW_QUERY
     ))?;
     let secret: [u8; 16] = rand::thread_rng().gen();
-    let params: [&dyn rusqlite::ToSql; 3] = [&comment.message, &comment.author, &secret];
+    let approved: usize = env::var("auto_approve")
+        .and_then(|v| Ok((v == "true").into()))
+        .unwrap_or_default();
+    let params: [&dyn rusqlite::ToSql; 4] = [&comment.message, &comment.author, &approved, &secret];
     let inserted = statement.query_row(params, row_to_comment)?;
     return respond_with_json(201, &inserted);
 }
