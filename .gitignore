@@ -135,6 +135,7 @@ images/
 
 # compiled files
 /js
+/dist
 
 # Rust files
 backend/target/
