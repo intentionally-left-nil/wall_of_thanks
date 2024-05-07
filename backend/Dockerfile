@@ -1,5 +1,5 @@
 FROM rust:1.78-alpine3.19 as builder
-RUN apk add --no-cache musl-dev sqlite-static sqlite-dev
+RUN apk update && apk add --no-cache musl-dev sqlite-static sqlite-dev
 
 WORKDIR /usr/src/wall_of_thanks
 
