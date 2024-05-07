@@ -153,6 +153,12 @@ export default class CommentElement extends HTMLElement {
         });
       }
       this.comment = comment;
+      const event = new CustomEvent('comment-submitted', {
+        detail: { comment },
+        bubbles: true,
+        composed: true,
+      });
+      this.dispatchEvent(event);
     } finally {
       this.setAttribute('editable', 'true');
       if (target) {

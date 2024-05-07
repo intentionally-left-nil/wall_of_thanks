@@ -5,6 +5,8 @@ export default class App extends HTMLElement {
   comments: Comment[] = [];
   insertTimer: number | null = null;
   loadCommentsTimer: number | null = null;
+  draftingNewComment = false;
+
   constructor() {
     super();
     this.loadComments();
@@ -19,12 +21,18 @@ export default class App extends HTMLElement {
     );
     this.addEventListener('new-comment', this.onNewComment.bind(this));
     this.addEventListener('element-removed', this.onElementRemoved.bind(this));
+    this.addEventListener(
+      'content-submitted',
+      this.onContentSubmitted.bind(this)
+    );
 
     window.addEventListener('resize', () => this.onResize.bind(this));
   }
 
   onNewComment(e: Event) {
-    const addComment = this.shadowRoot!.querySelector('#add-comment');
+    const addComment = this.shadowRoot!.querySelector(
+      '#add-comment'
+    ) as HTMLElement | null;
     if (addComment == null) {
       return;
     }
@@ -33,6 +41,17 @@ export default class App extends HTMLElement {
     <my-comment editable="true"></my-comment>
   </my-column-item>`;
     addComment.insertAdjacentHTML('afterend', commentHTML);
+    this.draftingNewComment = true;
+    addComment.setAttribute('disabled', '');
+  }
+
+  onContentSubmitted(e: Event) {
+    this.draftingNewComment = false;
+    const addComment = this.shadowRoot!.querySelector('#add-comment');
+    if (addComment) {
+      addComment.removeAttribute('disabled');
+    }
+    this.insertTimer = window.setTimeout(this.insertComment.bind(this), 30000);
   }
 
   async loadComments() {
@@ -57,6 +76,10 @@ export default class App extends HTMLElement {
     if (this.insertTimer) {
       window.clearTimeout(this.insertTimer);
       this.insertTimer = null;
+    }
+
+    if (this.draftingNewComment) {
+      return;
     }
 
     const leftColumn = this.shadowRoot!.querySelector(

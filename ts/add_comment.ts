@@ -1,4 +1,7 @@
 export default class AddCommentElement extends HTMLElement {
+  static get observedAttributes() {
+    return ['disabled'];
+  }
   constructor() {
     super();
     const node = document.getElementById('add-comment-template');
@@ -22,5 +25,22 @@ export default class AddCommentElement extends HTMLElement {
       composed: true,
     });
     this.dispatchEvent(event);
+  }
+
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null
+  ) {
+    const addComment = this.shadowRoot!.querySelector('#add-comment');
+    if (addComment == null || name !== 'disabled' || oldValue == newValue) {
+      return;
+    }
+
+    if (newValue == null) {
+      addComment.removeAttribute('disabled');
+    } else {
+      addComment.setAttribute('disabled', '');
+    }
   }
 }
