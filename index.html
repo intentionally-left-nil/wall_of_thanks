@@ -263,11 +263,42 @@
         height: 100vh;
         margin: 0;
         background-color: black;
+        flex-direction: row;
       }
 
       #hero {
         object-fit: contain;
         height: 100vh;
+      }
+
+      #right-letterbox {
+        display: none;
+      }
+
+      @media (max-width: 1000px) {
+        #root {
+          flex-direction: column;
+        }
+
+        #left-letterbox {
+          order: 1;
+        }
+
+        #hero {
+          width: 100%;
+          max-width: 800px;
+          max-height: 300px;
+          object-fit: cover;
+          object-position: center 33%;
+          height: auto;
+          order: 0
+        }
+      }
+
+      @media(min-width: 1500px) {
+        #right-letterbox {
+          display: block;
+        }
       }
 
       .letterbox {
