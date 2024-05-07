@@ -203,6 +203,39 @@
       </slot>
     </div>
   </template>
+  <template id="column-item-template">
+    <style>
+      @keyframes slideDown {
+        from {
+          grid-template-rows: 0fr;
+        }
+
+        to {
+          grid-template-rows: 1fr;
+        }
+      }
+
+      #root {
+        display: grid;
+        grid-template-rows: 0fr;
+      }
+
+      .expanded {
+        grid-template-rows: 1fr;
+      }
+
+      .slide-in {
+        animation: slideDown 1s forwards;
+      }
+
+      ::slotted(*) {
+        overflow: hidden;
+      }
+    </style>
+    <div id="root">
+      <slot></slot>
+    </div>
+  </template>
   <template id="app-template">
     <style>
       #root {
@@ -238,21 +271,6 @@
         }
       }
 
-      .slide-down {
-        display: grid;
-        animation: slideDown 1s forwards;
-      }
-
-      @keyframes fade-in {
-        from {
-          opacity: 0;
-        }
-
-        to {
-          opacity: 1;
-        }
-      }
-
       .fade-in {
         animation: fade-in 5s;
       }
@@ -269,10 +287,6 @@
 
       .fade-in {
         animation: fade-in 5s;
-      }
-
-      .slide-down>* {
-        overflow: hidden;
       }
     </style>
     <div id="root">

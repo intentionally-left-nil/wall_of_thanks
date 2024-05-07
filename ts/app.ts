@@ -27,9 +27,9 @@ export default class App extends HTMLElement {
       return;
     }
     const commentHTML = `
-  <div class="slide-down">
+  <my-column-item slide-in="true">
     <my-comment editable="true"></my-comment>
-  </div>`;
+  </my-column-item>`;
     addComment.insertAdjacentHTML('afterend', commentHTML);
   }
 
