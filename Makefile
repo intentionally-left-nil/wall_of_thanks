@@ -2,7 +2,7 @@ dev: build
 	cd dist && python3 -m http.server 8000
 
 backend:
-	cd backend && cargo run
+	cd backend && cargo run -- --secret=my_secret
 
 build:
 	rm -rf dist
