@@ -48,7 +48,7 @@ frontend_origin='my_frontend_domain' # CORS domain for the frontend. Defaults to
 auto_approve='true' # Whether to require an admin to approve the comment before it is visible
 ```
 
-The frontend code expects the backend to be available at `https://api.frontend-domain.com`
+The frontend code expects the backend to be available at `https://domain-backend.com`
 Otherwise you can just modify the [source code](./ts/backend.ts) to point to the correct spot
 
 ## Running outside of docker

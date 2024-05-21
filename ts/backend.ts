@@ -79,7 +79,9 @@ function getBackendDomain() {
   if (window.location.hostname === 'localhost') {
     return 'http://localhost:8001';
   }
-  return `https://api.${window.location.hostname}`;
+  const parts = window.location.hostname.split('.');
+  parts[0] += '-backend';
+  return `https://${parts.join('.')}`;
 }
 
 export { getComments, createComment, editComment };
